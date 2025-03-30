@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gagnants mensuels</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    canvas {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h2>Nombre de mois gagnants par employé</h2>
+  <canvas id="barChart"></canvas>
+
+  <script>
+    // Grist injecte l'objet grist dans l'environnement du widget
+    window.addEventListener("message", (event) => {
+      const grist = event.source;
+      grist.onRecords((records) => {
+        const lignes = records.records;
+
+        // Étape 1 : agréger les dépenses par Mois + Employé
+        const parMois = {};
+        for (const ligne of lignes) {
+          const mois = ligne.Month;
+          const employe = ligne.Employee;
+          const montant = ligne.Total || 0;
+
+          if (!parMois[mois]) parMois[mois] = {};
+          if (!parMois[mois][employe]) parMois[mois][employe] = 0;
+
+          parMois[mois][employe] += montant;
+        }
+
+        // Étape 2 : trouver l'employé top par mois
+        const compteGagnants = {};
+        for (const mois in parMois) {
+          const depenses = parMois[mois];
+          let maxMontant = -Infinity;
+          let gagnant = null;
+
+          for (const employe in depenses) {
+            if (depenses[employe] > maxMontant) {
+              maxMontant = depenses[employe];
+              gagnant = employe;
+            }
+          }
+
+          if (gagnant) {
+            compteGagnants[gagnant] = (compteGagnants[gagnant] || 0) + 1;
+          }
+        }
+
+        // Étape 3 : créer les datasets pour le graphique
+        const labels = Object.keys(compteGagnants).sort((a, b) => compteGagnants[b] - compteGagnants[a]);
+        const data = labels.map(nom => compteGagnants[nom]);
+
+        // Étape 4 : affichage avec Chart.js
+        const ctx = document.getElementById('barChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Mois gagnants',
+              data: data
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Nombre de mois' }
+              },
+              x: {
+                title: { display: true, text: 'Employés' }
+              }
+            }
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
