@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Debug Grist Widget v2</title>
+  <title>Debug Grist Widget forcé</title>
   <style>
     body {
       font-family: monospace;
@@ -22,21 +22,24 @@
   </style>
 </head>
 <body>
-  <h2>🧪 Grist Widget Debug v2</h2>
+  <h2>✏️ Grist Widget Debug forcé</h2>
   <div id="summary" class="block">En attente de données...</div>
   <div id="details" class="block"></div>
 
   <script>
-    const grist = window.grist || parent;
+    const resume = document.getElementById("summary");
+    const details = document.getElementById("details");
 
-    if (!grist || !grist.onRecords) {
-      document.getElementById("summary").innerHTML = "❌ Erreur : Grist non disponible.";
-    } else {
-      grist.onRecords((records) => {
-        const lignes = records.records;
-        const resume = document.getElementById("summary");
-        const details = document.getElementById("details");
+    window.addEventListener("message", (event) => {
+      try {
+        const data = event.data;
+        if (!data || !data.records) {
+          resume.innerHTML = "⚠️ Données invalides reçues.";
+          console.warn("Message sans .records:", data);
+          return;
+        }
 
+        const lignes = data.records;
         if (!lignes || lignes.length === 0) {
           resume.innerHTML = "⚠️ Aucune ligne reçue depuis Grist.";
           return;
@@ -56,8 +59,11 @@
         contenu += `<br><strong>Données brutes :</strong><pre>${JSON.stringify(exemple, null, 2)}</pre>`;
 
         details.innerHTML = contenu;
-      });
-    }
+      } catch (e) {
+        resume.innerHTML = `<span class="error">❌ Erreur JS : ${e.message}</span>`;
+        console.error("Erreur JS:", e);
+      }
+    });
   </script>
 </body>
 </html>
