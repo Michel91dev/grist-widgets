@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Debug Grist Widget</title>
+  <title>Debug Grist Widget v2</title>
   <style>
     body {
       font-family: monospace;
@@ -22,14 +22,16 @@
   </style>
 </head>
 <body>
-  <h2>🧪 Grist Widget Debug</h2>
+  <h2>🧪 Grist Widget Debug v2</h2>
   <div id="summary" class="block">En attente de données...</div>
   <div id="details" class="block"></div>
 
   <script>
-    window.addEventListener("message", (event) => {
-      const grist = event.source;
+    const grist = window.grist || parent;
 
+    if (!grist || !grist.onRecords) {
+      document.getElementById("summary").innerHTML = "❌ Erreur : Grist non disponible.";
+    } else {
       grist.onRecords((records) => {
         const lignes = records.records;
         const resume = document.getElementById("summary");
@@ -40,13 +42,9 @@
           return;
         }
 
-        // Affiche le nombre de lignes reçues
         resume.innerHTML = `✔ ${lignes.length} lignes reçues.`;
 
-        // Cherche les clés disponibles
         const cles = Object.keys(lignes[0] || {});
-
-        // Affiche les clés et valeurs d'une ligne exemple
         let exemple = lignes[0];
         let contenu = `<strong>Clés disponibles :</strong><br>${cles.join(", ")}<br><br>`;
 
@@ -55,12 +53,11 @@
         contenu += `Employee = <code>${exemple.Employee}</code><br>`;
         contenu += `Total = <code>${exemple.Total}</code><br>`;
 
-        // Affichage brut complet
         contenu += `<br><strong>Données brutes :</strong><pre>${JSON.stringify(exemple, null, 2)}</pre>`;
 
         details.innerHTML = contenu;
       });
-    });
+    }
   </script>
 </body>
 </html>
